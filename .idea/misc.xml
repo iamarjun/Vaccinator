@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="../../.gradle/caches/transforms-3/f2fe122bff398c9da5437475fe921228/transformed/jetified-appcompat-resources-1.2.0/res/drawable/abc_vector_test.xml" value="0.387037037037037" />
+        <entry key="app/src/main/res/drawable/virus.xml" value="0.387037037037037" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.4244791666666667" />
+      </map>
+    </option>
+  </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="11" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
