@@ -4,6 +4,7 @@ import android.app.Notification.DEFAULT_ALL
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_HIGH
+import android.app.PendingIntent
 import android.app.PendingIntent.getActivity
 import android.content.Context
 import android.content.Context.NOTIFICATION_SERVICE
@@ -11,7 +12,7 @@ import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.graphics.BitmapFactory
-import android.graphics.Color.RED
+import android.graphics.Color.BLUE
 import android.media.AudioAttributes
 import android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION
 import android.media.AudioAttributes.USAGE_NOTIFICATION_RINGTONE
@@ -46,10 +47,17 @@ class CheckAvailabilityWorker @AssistedInject constructor(
     private val syncManager: SyncManager,
 ) : CoroutineWorker(appContext, workerParameters) {
 
+    private val notificationManager by lazy {
+        applicationContext.getSystemService(
+            NOTIFICATION_SERVICE
+        ) as NotificationManager
+    }
+
     override suspend fun doWork(): Result {
 
         val pincode = inputData.getInt(PINCODE, 110091)
         val age = inputData.getInt(AGE, 18)
+        var gotAppointment = false
 
         return try {
             val dates = fetchNext10Days()
@@ -59,15 +67,18 @@ class CheckAvailabilityWorker @AssistedInject constructor(
                     response.sessions.filter { slot -> slot.minAgeLimit <= age && slot.availableCapacity > 0 }
                 Log.d(TAG, "doWork: Slots: $validSlots")
                 if (validSlots.isNullOrEmpty().not()) {
-                    sendNotification(validSlots)
-                    return Result.success()
+                    gotAppointment = true
+                    notifyAboutAvailableSlots(validSlots)
                 }
                 delay(1000)
             }
 
             syncManager.saveLastSyncDate(LocalDateTime.now().toString())
 
-            Result.failure()
+            if (gotAppointment.not())
+                notifyAboutNonAvailableSlots()
+
+            Result.success()
 
         } catch (e: Exception) {
             Log.d(TAG, "doWork: $e")
@@ -89,20 +100,51 @@ class CheckAvailabilityWorker @AssistedInject constructor(
         return dates
     }
 
-    private fun sendNotification(sessions: List<Session>) {
+    private fun notifyAboutAvailableSlots(sessions: List<Session>) {
         val id = sessions.hashCode()
         val intent = Intent(applicationContext, MainActivity::class.java)
         intent.flags = FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TASK
         intent.putExtra(NOTIFICATION_ID, id)
 
-        val notificationManager =
-            applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        val titleNotification = "Vaccination Slots Available"
-        val subtitleNotification = sessions.joinToString(separator = "\n") {
-            "${it.name} has ${it.availableCapacity} slots available."
-        }
+        val titleNotification = "Vaccination Slots Available For ${sessions.first().date}"
+        val subtitleNotification = "At ${sessions.size} centres"
         val pendingIntent = getActivity(applicationContext, 0, intent, 0)
+        val style = NotificationCompat.BigTextStyle()
+            .bigText(sessions.joinToString(separator = "\n") {
+                "${it.name} has ${it.availableCapacity} slots available."
+            })
+
+        sendNotification(id, titleNotification, subtitleNotification, pendingIntent, style)
+
+    }
+
+    private fun notifyAboutNonAvailableSlots() {
+        val id = (0..Int.MAX_VALUE).random()
+        val intent = Intent(applicationContext, MainActivity::class.java)
+        intent.flags = FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TASK
+        intent.putExtra(NOTIFICATION_ID, id)
+
+
+        val titleNotification = "Vaccination Slots Currently Not Available"
+        val pendingIntent = getActivity(applicationContext, 0, intent, 0)
+
+
+        sendNotification(
+            id = id,
+            titleNotification = titleNotification,
+            pendingIntent = pendingIntent
+        )
+
+    }
+
+    private fun sendNotification(
+        id: Int,
+        titleNotification: String,
+        subtitleNotification: String? = null,
+        pendingIntent: PendingIntent,
+        style: NotificationCompat.Style? = null
+    ) {
         val notification = NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL)
             .setSmallIcon(R.drawable.ic_virus)
             .setLargeIcon(
@@ -111,6 +153,7 @@ class CheckAvailabilityWorker @AssistedInject constructor(
                     R.drawable.ic_virus
                 )
             )
+            .setStyle(style)
             .setContentTitle(titleNotification)
             .setContentText(subtitleNotification)
             .setDefaults(DEFAULT_ALL)
@@ -123,16 +166,22 @@ class CheckAvailabilityWorker @AssistedInject constructor(
             notification.setChannelId(NOTIFICATION_CHANNEL)
 
             val ringtoneManager = getDefaultUri(TYPE_NOTIFICATION)
-            val audioAttributes = AudioAttributes.Builder().setUsage(USAGE_NOTIFICATION_RINGTONE)
-                .setContentType(CONTENT_TYPE_SONIFICATION).build()
+            val audioAttributes =
+                AudioAttributes.Builder().setUsage(USAGE_NOTIFICATION_RINGTONE)
+                    .setContentType(CONTENT_TYPE_SONIFICATION).build()
 
             val channel =
-                NotificationChannel(NOTIFICATION_CHANNEL, NOTIFICATION_NAME, IMPORTANCE_HIGH)
+                NotificationChannel(
+                    NOTIFICATION_CHANNEL,
+                    NOTIFICATION_NAME,
+                    IMPORTANCE_HIGH
+                )
 
             channel.enableLights(true)
-            channel.lightColor = RED
+            channel.lightColor = BLUE
             channel.enableVibration(true)
-            channel.vibrationPattern = longArrayOf(100, 200, 300, 400, 500, 400, 300, 200, 400)
+            channel.vibrationPattern =
+                longArrayOf(100, 200, 300, 400, 500, 400, 300, 200, 400)
             channel.setSound(ringtoneManager, audioAttributes)
             notificationManager.createNotificationChannel(channel)
         }
