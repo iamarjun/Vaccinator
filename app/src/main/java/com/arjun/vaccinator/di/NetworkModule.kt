@@ -1,7 +1,7 @@
 package com.arjun.vaccinator.di
 
 import com.arjun.vaccinator.BuildConfig
-import com.arjun.vaccinator.RestApi
+import com.arjun.vaccinator.CoWinApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,7 +31,7 @@ object NetworkModule {
 
 
     @Provides
-    fun provideRestApi(retrofit: Retrofit): RestApi {
-        return retrofit.create(RestApi::class.java)
+    fun provideRestApi(retrofit: Retrofit): CoWinApi {
+        return retrofit.create(CoWinApi::class.java)
     }
 }

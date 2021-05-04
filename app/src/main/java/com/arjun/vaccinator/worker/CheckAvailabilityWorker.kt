@@ -20,20 +20,21 @@ import android.media.RingtoneManager.TYPE_NOTIFICATION
 import android.media.RingtoneManager.getDefaultUri
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.O
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.PRIORITY_MAX
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.arjun.vaccinator.CoWinApi
 import com.arjun.vaccinator.MainActivity
 import com.arjun.vaccinator.R
-import com.arjun.vaccinator.RestApi
+import com.arjun.vaccinator.model.District
 import com.arjun.vaccinator.model.Session
 import com.arjun.vaccinator.util.SyncManager
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.delay
+import timber.log.Timber
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -43,7 +44,7 @@ import java.util.*
 class CheckAvailabilityWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParameters: WorkerParameters,
-    private val restApi: RestApi,
+    private val coWinApi: CoWinApi,
     private val syncManager: SyncManager,
 ) : CoroutineWorker(appContext, workerParameters) {
 
@@ -55,20 +56,27 @@ class CheckAvailabilityWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
 
-        val pincode = inputData.getInt(PINCODE, 110091)
-        val age = inputData.getInt(AGE, 18)
         var gotAppointment = false
+        val dates = fetchNext15Days()
 
         return try {
-            val dates = fetchNext10Days()
-            dates.forEach { date ->
-                val response = restApi.getSlotsForDate(pincode, date)
-                val validSlots =
-                    response.sessions.filter { slot -> slot.minAgeLimit <= age && slot.availableCapacity > 0 }
-                Log.d(TAG, "doWork: Slots: $validSlots")
-                if (validSlots.isNullOrEmpty().not()) {
-                    gotAppointment = true
-                    notifyAboutAvailableSlots(validSlots)
+
+            val districts = getAllDistricts(9)
+
+            districts.forEach { district ->
+                dates.forEach { date ->
+                    val response = coWinApi.getSlotsByDistrict(
+                        districtId = district.districtId,
+                        date = date
+                    )
+                    val validSlots =
+                        response.sessions.filter { slot -> slot.minAgeLimit <= AGE && slot.vaccine.toLowerCase() == "covaxin" && slot.availableCapacity > 0 }
+                    Timber.d("doWork: Slots: $validSlots")
+                    if (validSlots.isNullOrEmpty().not()) {
+                        gotAppointment = true
+                        notifyAboutAvailableSlots(validSlots)
+                    }
+                    delay(1000)
                 }
                 delay(1000)
             }
@@ -81,18 +89,23 @@ class CheckAvailabilityWorker @AssistedInject constructor(
             Result.success()
 
         } catch (e: Exception) {
-            Log.d(TAG, "doWork: $e")
+            Timber.d("doWork: $e")
             Result.failure()
         }
     }
 
-    private fun fetchNext10Days(): List<String> {
+    private suspend fun getAllDistricts(stateId: Int): List<District> {
+        val response = coWinApi.getAllDistrictOfTheState(stateId)
+        return response.districts
+    }
+
+    private fun fetchNext15Days(): List<String> {
         val dates = mutableListOf<String>()
         var today = LocalDate.now()
 
         val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
 
-        for (i in 1..10) {
+        for (i in 1..15) {
             val dateString = formatter.format(today)
             dates.add(dateString)
             today = today.plusDays(1)
@@ -125,10 +138,8 @@ class CheckAvailabilityWorker @AssistedInject constructor(
         intent.flags = FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TASK
         intent.putExtra(NOTIFICATION_ID, id)
 
-
-        val titleNotification = "Vaccination Slots Currently Not Available"
+        val titleNotification = "No Vaccine Available"
         val pendingIntent = getActivity(applicationContext, 0, intent, 0)
-
 
         sendNotification(
             id = id,
@@ -190,9 +201,7 @@ class CheckAvailabilityWorker @AssistedInject constructor(
     }
 
     companion object {
-        private const val TAG = "CheckAvailabilityWorker"
-        const val PINCODE = "pincode"
-        const val AGE = "age"
+        const val AGE = 18
         private val NOTIFICATION_ID = UUID.randomUUID().toString()
         private val NOTIFICATION_CHANNEL = UUID.randomUUID().toString()
         private const val NOTIFICATION_NAME = "Vaccination Appointment"

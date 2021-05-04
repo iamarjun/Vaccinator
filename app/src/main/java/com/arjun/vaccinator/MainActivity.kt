@@ -38,20 +38,17 @@ class MainActivity : AppCompatActivity() {
 
         val checkAvailabilityRequest =
             PeriodicWorkRequestBuilder<CheckAvailabilityWorker>(15, TimeUnit.MINUTES)
-                .setInputData(
-                    workDataOf(
-                        CheckAvailabilityWorker.PINCODE to 110091,
-                        CheckAvailabilityWorker.AGE to 25
-                    )
-                )
                 .setConstraints(constraints)
                 .build()
 
-        workManager.enqueueUniquePeriodicWork(
-            SYNC_DATA_WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
-            checkAvailabilityRequest
-        )
+
+        binding.checkNow.setOnClickListener {
+            workManager.enqueueUniquePeriodicWork(
+                SYNC_DATA_WORK_NAME,
+                ExistingPeriodicWorkPolicy.KEEP,
+                checkAvailabilityRequest
+            )
+        }
 
         syncManager.getLastSyncDate().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
             .onEach {
@@ -71,7 +68,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val TAG = "MainActivity"
         private const val SYNC_DATA_WORK_NAME = "SYNC_DATA_WORK_NAME"
     }
 }

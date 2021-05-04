@@ -19,7 +19,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"https://cdn-api.co-vin.in/api/\"")
+        buildConfigField("String", "BASE_URL", "\"https://cdn-api.co-vin.in/api/v2/\"")
     }
 
     buildTypes {
@@ -29,6 +29,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            isDebuggable = true
         }
     }
     buildFeatures {
@@ -46,7 +49,7 @@ android {
 
 dependencies {
 
-    coreLibraryDesugaring ("com.android.tools:desugar_jdk_libs:1.1.5")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
 
     implementation("androidx.core:core-ktx:1.3.2")
     implementation("androidx.appcompat:appcompat:1.2.0")
@@ -83,6 +86,9 @@ dependencies {
 
     //DataStore
     implementation("androidx.datastore:datastore-preferences:1.0.0-beta01")
+
+    //Timber
+    implementation("com.jakewharton.timber:timber:4.7.1")
 
     testImplementation("junit:junit:4.+")
     androidTestImplementation("androidx.test.ext:junit:1.1.2")
