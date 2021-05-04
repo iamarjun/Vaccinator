@@ -125,7 +125,7 @@ class CheckAvailabilityWorker @AssistedInject constructor(
         val pendingIntent = getActivity(applicationContext, 0, intent, 0)
         val style = NotificationCompat.BigTextStyle()
             .bigText(sessions.joinToString(separator = "\n") {
-                "${it.name} has ${it.availableCapacity} slots available."
+                "${it.name} has ${it.availableCapacity} slots available for ${it.vaccine.toUpperCase()} District ${it.districtName}"
             })
 
         sendNotification(id, titleNotification, subtitleNotification, pendingIntent, style)

@@ -37,17 +37,19 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         val checkAvailabilityRequest =
-            PeriodicWorkRequestBuilder<CheckAvailabilityWorker>(15, TimeUnit.MINUTES)
+            PeriodicWorkRequestBuilder<CheckAvailabilityWorker>(30, TimeUnit.MINUTES)
                 .setConstraints(constraints)
                 .build()
 
 
+        workManager.enqueueUniquePeriodicWork(
+            SYNC_DATA_WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            checkAvailabilityRequest
+        )
+
         binding.checkNow.setOnClickListener {
-            workManager.enqueueUniquePeriodicWork(
-                SYNC_DATA_WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
-                checkAvailabilityRequest
-            )
+
         }
 
         syncManager.getLastSyncDate().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
