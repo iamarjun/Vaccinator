@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         val checkAvailabilityRequest =
-            PeriodicWorkRequestBuilder<CheckAvailabilityWorker>(6, TimeUnit.HOURS)
+            PeriodicWorkRequestBuilder<CheckAvailabilityWorker>(1, TimeUnit.HOURS)
                 .setConstraints(constraints)
                 .build()
 

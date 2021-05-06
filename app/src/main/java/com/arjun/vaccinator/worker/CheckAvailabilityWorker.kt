@@ -90,6 +90,7 @@ class CheckAvailabilityWorker @AssistedInject constructor(
 
         } catch (e: Exception) {
             Timber.d("doWork: $e")
+            notifyAboutError(e.message)
             Result.failure()
         }
     }
@@ -144,6 +145,24 @@ class CheckAvailabilityWorker @AssistedInject constructor(
         sendNotification(
             id = id,
             titleNotification = titleNotification,
+            pendingIntent = pendingIntent
+        )
+
+    }
+
+    private fun notifyAboutError(subtitleNotification: String?) {
+        val id = (0..Int.MAX_VALUE).random()
+        val intent = Intent(applicationContext, MainActivity::class.java)
+        intent.flags = FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TASK
+        intent.putExtra(NOTIFICATION_ID, id)
+
+        val titleNotification = "Something went wrong"
+        val pendingIntent = getActivity(applicationContext, 0, intent, 0)
+
+        sendNotification(
+            id = id,
+            titleNotification = titleNotification,
+            subtitleNotification = subtitleNotification,
             pendingIntent = pendingIntent
         )
 
