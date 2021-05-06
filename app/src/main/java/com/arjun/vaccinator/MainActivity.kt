@@ -14,6 +14,7 @@ import com.arjun.vaccinator.worker.CheckAvailabilityWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
@@ -37,7 +38,7 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         val checkAvailabilityRequest =
-            PeriodicWorkRequestBuilder<CheckAvailabilityWorker>(30, TimeUnit.MINUTES)
+            PeriodicWorkRequestBuilder<CheckAvailabilityWorker>(6, TimeUnit.HOURS)
                 .setConstraints(constraints)
                 .build()
 
@@ -47,10 +48,6 @@ class MainActivity : AppCompatActivity() {
             ExistingPeriodicWorkPolicy.KEEP,
             checkAvailabilityRequest
         )
-
-        binding.checkNow.setOnClickListener {
-
-        }
 
         syncManager.getLastSyncDate().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
             .onEach {

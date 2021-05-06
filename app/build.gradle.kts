@@ -57,7 +57,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.0.4")
 
     implementation("androidx.fragment:fragment-ktx:1.3.3")
-    implementation("androidx.activity:activity-ktx:1.2.2")
+    implementation("androidx.activity:activity-ktx:1.2.3")
 
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0-alpha01")
     implementation("androidx.lifecycle:lifecycle-common-java8:2.4.0-alpha01")
@@ -66,12 +66,12 @@ dependencies {
 
     //WorkManager
     implementation("androidx.work:work-runtime-ktx:2.5.0")
-    implementation("androidx.hilt:hilt-work:1.0.0-beta01")
-    kapt("androidx.hilt:hilt-compiler:1.0.0-beta01")
+    implementation("androidx.hilt:hilt-work:1.0.0")
+    kapt("androidx.hilt:hilt-compiler:1.0.0")
 
     //Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-RC-native-mt")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0-RC-native-mt")
 
     //Hilt
     implementation("com.google.dagger:hilt-android:2.35.1")
