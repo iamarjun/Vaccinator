@@ -34,6 +34,7 @@ import com.arjun.vaccinator.util.SyncManager
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.delay
+import retrofit2.HttpException
 import timber.log.Timber
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -87,6 +88,10 @@ class CheckAvailabilityWorker @AssistedInject constructor(
 
             Result.success()
 
+        } catch (e: HttpException) {
+            Timber.d("doWork: $e")
+            notifyAboutError(e.message)
+            Result.retry()
         } catch (e: Exception) {
             Timber.d("doWork: $e")
             notifyAboutError(e.message)
