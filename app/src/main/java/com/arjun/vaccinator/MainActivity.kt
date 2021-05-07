@@ -42,13 +42,14 @@ class MainActivity : AppCompatActivity() {
                 .build()
 
         binding.root.setOnClickListener {
-            workManager.enqueueUniquePeriodicWork(
-                SYNC_DATA_WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
-                checkAvailabilityRequest
-            )
+
         }
 
+        workManager.enqueueUniquePeriodicWork(
+            SYNC_DATA_WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            checkAvailabilityRequest
+        )
 
         syncManager.getLastSyncDate().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
             .onEach {

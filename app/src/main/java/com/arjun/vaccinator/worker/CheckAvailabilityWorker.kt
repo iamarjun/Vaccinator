@@ -54,33 +54,30 @@ class CheckAvailabilityWorker @AssistedInject constructor(
         ) as NotificationManager
     }
 
+    /**
+     * Limit: 100 API calls per 5 minutes per IP
+     */
     override suspend fun doWork(): Result {
 
         var gotAppointment = false
-        val dates = fetchNext15Days()
+        val dates = fetchNextDays(days = 7)
         val headerMap = getHeaders()
 
         return try {
-
-            val districts = getAllDistricts(9, headerMap)
-
-            districts.forEach { district ->
-                dates.forEach { date ->
-                    val response = coWinApi.getSlotsByDistrict(
-                        districtId = district.districtId,
-                        date = date,
-                        headers = headerMap
-                    )
-                    val validSlots =
-                        response.sessions.filter { slot -> slot.minAgeLimit <= AGE && slot.vaccine.lowercase() == "covaxin" && slot.availableCapacity > 0 }
-                    Timber.d("doWork: Slots: $validSlots")
-                    if (validSlots.isNullOrEmpty().not()) {
-                        gotAppointment = true
-                        notifyAboutAvailableSlots(validSlots)
-                    }
-                    delay(1000)
+            dates.forEach { date ->
+                val response = coWinApi.getSlotsByDistrict(
+                    districtId = 145, //EAST DELHI
+                    date = date,
+                    headers = headerMap
+                )
+                val validSlots =
+                    response.sessions.filter { slot -> slot.minAgeLimit <= AGE && slot.vaccine.lowercase() == "covaxin" && slot.availableCapacity > 0 }
+                Timber.d("doWork: Slots: $validSlots")
+                if (validSlots.isNullOrEmpty().not()) {
+                    gotAppointment = true
+                    notifyAboutAvailableSlots(validSlots)
                 }
-                delay(1000)
+                delay(2000)
             }
 
             syncManager.saveLastSyncDate(LocalDateTime.now().toString())
@@ -110,13 +107,13 @@ class CheckAvailabilityWorker @AssistedInject constructor(
         return response.districts
     }
 
-    private fun fetchNext15Days(): List<String> {
+    private fun fetchNextDays(days: Int): List<String> {
         val dates = mutableListOf<String>()
         var today = LocalDate.now()
 
         val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
 
-        for (i in 1..15) {
+        for (i in 1..days) {
             val dateString = formatter.format(today)
             dates.add(dateString)
             today = today.plusDays(1)
