@@ -2,6 +2,8 @@ package com.arjun.vaccinator.di
 
 import com.arjun.vaccinator.BuildConfig
 import com.arjun.vaccinator.CoWinApi
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,24 +16,22 @@ import retrofit2.converter.gson.GsonConverterFactory
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
+    @Provides
+    fun provideGson() = GsonBuilder()
+        .setLenient()
+        .create()
 
     @Provides
     fun providesOkhttpClientBuilder(): OkHttpClient.Builder {
-        return OkHttpClient().newBuilder().addInterceptor {
-            val request = it.request().newBuilder().addHeader(
-                "User-Agent",
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"
-            ).build()
-            it.proceed(request)
-        }
+        return OkHttpClient().newBuilder()
     }
 
     @Provides
-    fun provideRetrofitBuilder(okHttpClientBuilder: OkHttpClient.Builder): Retrofit {
+    fun provideRetrofitBuilder(okHttpClientBuilder: OkHttpClient.Builder, gson: Gson): Retrofit {
         return Retrofit.Builder()
             .client(okHttpClientBuilder.build())
             .baseUrl(BuildConfig.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 

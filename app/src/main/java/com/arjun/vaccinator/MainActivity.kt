@@ -14,7 +14,6 @@ import com.arjun.vaccinator.worker.CheckAvailabilityWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
@@ -24,7 +23,7 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity() {
 
     private val workManager by lazy { WorkManager.getInstance(this) }
-    private val binding by viewBinding(ActivityMainBinding::inflate)
+    private val binding: ActivityMainBinding by viewBinding(ActivityMainBinding::inflate)
 
     @Inject
     internal lateinit var syncManager: SyncManager
@@ -42,12 +41,14 @@ class MainActivity : AppCompatActivity() {
                 .setConstraints(constraints)
                 .build()
 
+        binding.root.setOnClickListener {
+            workManager.enqueueUniquePeriodicWork(
+                SYNC_DATA_WORK_NAME,
+                ExistingPeriodicWorkPolicy.KEEP,
+                checkAvailabilityRequest
+            )
+        }
 
-        workManager.enqueueUniquePeriodicWork(
-            SYNC_DATA_WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
-            checkAvailabilityRequest
-        )
 
         syncManager.getLastSyncDate().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
             .onEach {

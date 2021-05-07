@@ -58,19 +58,21 @@ class CheckAvailabilityWorker @AssistedInject constructor(
 
         var gotAppointment = false
         val dates = fetchNext15Days()
+        val headerMap = getHeaders()
 
         return try {
 
-            val districts = getAllDistricts(9)
+            val districts = getAllDistricts(9, headerMap)
 
             districts.forEach { district ->
                 dates.forEach { date ->
                     val response = coWinApi.getSlotsByDistrict(
                         districtId = district.districtId,
-                        date = date
+                        date = date,
+                        headers = headerMap
                     )
                     val validSlots =
-                        response.sessions.filter { slot -> slot.minAgeLimit <= AGE && slot.vaccine.toLowerCase() == "covaxin" && slot.availableCapacity > 0 }
+                        response.sessions.filter { slot -> slot.minAgeLimit <= AGE && slot.vaccine.lowercase() == "covaxin" && slot.availableCapacity > 0 }
                     Timber.d("doWork: Slots: $validSlots")
                     if (validSlots.isNullOrEmpty().not()) {
                         gotAppointment = true
@@ -95,8 +97,16 @@ class CheckAvailabilityWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun getAllDistricts(stateId: Int): List<District> {
-        val response = coWinApi.getAllDistrictOfTheState(stateId)
+    private suspend fun getHeaders(): Map<String, Any> {
+        val response = coWinApi.getHeader()
+
+        return mapOf(
+            "User-Agent" to response.headers.userAgent,
+        )
+    }
+
+    private suspend fun getAllDistricts(stateId: Int, headerMap: Map<String, Any>): List<District> {
+        val response = coWinApi.getAllDistrictOfTheState(stateId, headerMap)
         return response.districts
     }
 
@@ -126,7 +136,7 @@ class CheckAvailabilityWorker @AssistedInject constructor(
         val pendingIntent = getActivity(applicationContext, 0, intent, 0)
         val style = NotificationCompat.BigTextStyle()
             .bigText(sessions.joinToString(separator = "\n") {
-                "${it.name} has ${it.availableCapacity} slots available for ${it.vaccine.toUpperCase()} District ${it.districtName}"
+                "${it.name} has ${it.availableCapacity} slots available for ${it.vaccine.uppercase()} District ${it.districtName}"
             })
 
         sendNotification(id, titleNotification, subtitleNotification, pendingIntent, style)
