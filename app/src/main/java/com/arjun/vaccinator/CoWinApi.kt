@@ -1,9 +1,6 @@
 package com.arjun.vaccinator
 
-import com.arjun.vaccinator.model.DistrictsResponse
-import com.arjun.vaccinator.model.HeadersResponse
-import com.arjun.vaccinator.model.SessionResponse
-import com.arjun.vaccinator.model.StatesResponse
+import com.arjun.vaccinator.model.*
 import retrofit2.http.GET
 import retrofit2.http.HeaderMap
 import retrofit2.http.Path
@@ -36,7 +33,4 @@ interface CoWinApi {
         @Query("date") date: String,
         @HeaderMap headers: Map<String, Any>
     ): SessionResponse
-
-    @GET("http://httpbin.org/headers")
-    suspend fun getHeader(): HeadersResponse
 }

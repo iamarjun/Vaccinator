@@ -20,6 +20,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "BASE_URL", "\"https://cdn-api.co-vin.in/api/v2/\"")
+        buildConfigField("String", "HTTPBIN_BASE_URL", "\"\"https://httpbin.org/\"")
     }
 
     buildTypes {

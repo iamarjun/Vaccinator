@@ -26,6 +26,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.arjun.vaccinator.CoWinApi
+import com.arjun.vaccinator.HttpBinApi
 import com.arjun.vaccinator.MainActivity
 import com.arjun.vaccinator.R
 import com.arjun.vaccinator.model.District
@@ -46,6 +47,7 @@ class CheckAvailabilityWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParameters: WorkerParameters,
     private val coWinApi: CoWinApi,
+    private val httpBinApi: HttpBinApi,
     private val syncManager: SyncManager,
 ) : CoroutineWorker(appContext, workerParameters) {
 
@@ -62,7 +64,7 @@ class CheckAvailabilityWorker @AssistedInject constructor(
 
         var gotAppointment = false
         val dates = fetchNextDays(days = 7)
-        val headerMap = getHeaders()
+        val headerMap = getUserAgent()
 
         return try {
             dates.forEach { date ->
@@ -99,11 +101,11 @@ class CheckAvailabilityWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun getHeaders(): Map<String, Any> {
-        val response = coWinApi.getHeader()
+    private suspend fun getUserAgent(): Map<String, Any> {
+        val response = httpBinApi.getUserAgent()
 
         return mapOf(
-            "User-Agent" to response.headers.userAgent,
+            "User-Agent" to response.userAgent,
         )
     }
 
