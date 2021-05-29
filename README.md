@@ -2,5 +2,4 @@
 
 
 Get Notified when the vaccine is available
-
-Currently hardcoded to sweep the all the districts of Delhi.
+Donesn't have a UI and it's currently configured to sweep all the districts of Delhi.
